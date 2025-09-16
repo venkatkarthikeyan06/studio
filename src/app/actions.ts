@@ -56,17 +56,16 @@ export async function generateStudyGuide(
             return { data: null, error: 'Invalid YouTube URL.', timestamp: Date.now() };
         }
         
-        const audioStream = ytdl(youtubeUrl, { filter: 'audioonly' });
-        const chunks: Buffer[] = [];
-        
         const streamToBuffer = (stream: PassThrough): Promise<Buffer> => {
-            return new Promise((resolve, reject) => {
-              stream.on('data', chunk => chunks.push(chunk));
-              stream.on('error', reject);
-              stream.on('end', () => resolve(Buffer.concat(chunks)));
-            });
-          };
+          const chunks: Buffer[] = [];
+          return new Promise((resolve, reject) => {
+            stream.on('data', chunk => chunks.push(chunk));
+            stream.on('error', reject);
+            stream.on('end', () => resolve(Buffer.concat(chunks)));
+          });
+        };
 
+        const audioStream = ytdl(youtubeUrl, { filter: 'audioonly' });
         const buffer = await streamToBuffer(audioStream);
         const base64String = buffer.toString('base64');
         const audioDataUri = `data:audio/mp4;base64,${base64String}`;
