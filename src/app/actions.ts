@@ -52,26 +52,30 @@ export async function generateStudyGuide(
     let transcript = '';
 
     if (youtubeUrl) {
-        if (!ytdl.validateURL(youtubeUrl)) {
-            return { data: null, error: 'Invalid YouTube URL.', timestamp: Date.now() };
-        }
-        
-        const streamToBuffer = (stream: PassThrough): Promise<Buffer> => {
-          const chunks: Buffer[] = [];
-          return new Promise((resolve, reject) => {
-            stream.on('data', chunk => chunks.push(chunk));
-            stream.on('error', reject);
-            stream.on('end', () => resolve(Buffer.concat(chunks)));
-          });
-        };
+      if (!ytdl.validateURL(youtubeUrl)) {
+        return { data: null, error: 'Please provide a valid YouTube URL.', timestamp: Date.now() };
+      }
+      
+      const streamToBuffer = (stream: PassThrough): Promise<Buffer> => {
+        const chunks: Buffer[] = [];
+        return new Promise((resolve, reject) => {
+          stream.on('data', chunk => chunks.push(chunk));
+          stream.on('error', reject);
+          stream.on('end', () => resolve(Buffer.concat(chunks)));
+        });
+      };
 
-        const audioStream = ytdl(youtubeUrl, { filter: 'audioonly' });
-        const buffer = await streamToBuffer(audioStream);
-        const base64String = buffer.toString('base64');
-        const audioDataUri = `data:audio/mp4;base64,${base64String}`;
-        
-        const transcriptionResult = await transcribeAudio({ audioDataUri });
-        transcript = transcriptionResult.transcription;
+      const audioStream = ytdl(youtubeUrl, {
+        filter: 'audioonly',
+        quality: 'lowestaudio',
+      });
+      
+      const buffer = await streamToBuffer(audioStream as PassThrough);
+      const base64String = buffer.toString('base64');
+      const audioDataUri = `data:audio/mp4;base64,${base64String}`;
+      
+      const transcriptionResult = await transcribeAudio({ audioDataUri });
+      transcript = transcriptionResult.transcription;
 
     } else if (file && file.size > 0) {
         const allowedMimeTypes = ['audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/x-m4a'];
