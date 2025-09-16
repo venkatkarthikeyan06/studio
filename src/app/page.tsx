@@ -1,5 +1,19 @@
+
+'use client';
+
 import StudyGuideGenerator from '@/components/study-guide-generator';
 import { Separator } from '@/components/ui/separator';
+import { useState, useEffect } from 'react';
+
+function Copyright() {
+  const [year, setYear] = useState(new Date().getFullYear());
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
+
+  return <p>&copy; {year} StudyWise AI. All rights reserved.</p>;
+}
 
 export default function Home() {
   return (
@@ -18,7 +32,7 @@ export default function Home() {
         </main>
         <Separator className="my-4" />
         <footer className="text-center py-6 text-muted-foreground text-sm">
-          <p>&copy; {new Date().getFullYear()} StudyWise AI. All rights reserved.</p>
+          <Copyright />
           <p>Powered by Next.js and Generative AI.</p>
         </footer>
       </div>
