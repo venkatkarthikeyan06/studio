@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, HelpCircle, List, Loader2, UploadCloud, Wand2, FileAudio } from 'lucide-react';
+import { BookOpen, HelpCircle, List, Loader2, UploadCloud, Wand2, FileAudio, Download, Youtube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useReactToPrint } from 'react-to-print';
+import { marked } from 'marked';
 
 const initialState: FormState = {
   data: null,
@@ -34,6 +36,137 @@ function SubmitButton() {
     </Button>
   );
 }
+
+function StudyGuideDisplay({ state }: { state: FormState }) {
+  const componentRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    content: () => componentRef.current,
+    documentTitle: 'StudyWise-AI-Study-Guide',
+  });
+
+  if (!state.data) return null;
+  
+  const { summary, keyTerms, quizQuestions } = state.data;
+
+  const markdownContent = `
+# StudyWise AI Study Guide
+
+## 📝 Summary
+${summary}
+
+## 🔑 Key Terms
+${keyTerms.map(term => `- **${term}**`).join('\n')}
+
+## 🤔 Quiz Questions
+${quizQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}
+  `;
+
+  const htmlContent = marked.parse(markdownContent);
+
+  return (
+    <div className="space-y-8 animate-in fade-in-0 duration-500">
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-headline font-bold text-primary">Your Study Guide is Ready!</h2>
+        <Button onClick={handlePrint} variant="outline">
+          <Download className="mr-2 h-4 w-4" />
+          Download PDF
+        </Button>
+      </div>
+
+      <div ref={componentRef} className="printable-content p-8 bg-white text-black rounded-lg">
+        <style type="text/css" media="print">
+          {`
+            @page { size: auto; margin: 20mm; }
+            body { -webkit-print-color-adjust: exact; }
+            .printable-content {
+                font-family: 'Inter', sans-serif;
+                color: #000;
+            }
+            .printable-content h1 {
+                font-family: 'Space Grotesk', sans-serif;
+                font-size: 2.5rem;
+                color: #673AB7;
+                text-align: center;
+                margin-bottom: 2rem;
+            }
+            .printable-content h2 {
+                font-family: 'Space Grotesk', sans-serif;
+                font-size: 1.75rem;
+                color: #673AB7;
+                border-bottom: 2px solid #00BCD4;
+                padding-bottom: 0.5rem;
+                margin-top: 2rem;
+                margin-bottom: 1rem;
+            }
+            .printable-content ul, .printable-content ol {
+                padding-left: 2rem;
+            }
+             .printable-content li {
+                margin-bottom: 0.5rem;
+            }
+             .printable-content strong {
+                font-weight: 700;
+            }
+          `}
+        </style>
+
+        <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+      </div>
+
+
+      {/* Display for web view */}
+      <div className="web-view space-y-8">
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl font-headline flex items-center gap-2">
+              <BookOpen className="text-primary" />
+              Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-foreground/90 leading-relaxed">{summary}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl font-headline flex items-center gap-2">
+              <List className="text-primary" />
+              Key Terms
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {keyTerms.map((term, index) => (
+                <Badge key={index} variant="secondary" className="text-sm py-1 px-3 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
+                  {term}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl font-headline flex items-center gap-2">
+              <HelpCircle className="text-primary" />
+              Quiz Questions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-4 list-decimal list-inside text-foreground/90">
+              {quizQuestions.map((question, index) => (
+                <li key={index} className="pl-2">{question}</li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 
 function GeneratorFormContent({ state }: { state: FormState }) {
   const { pending } = useFormStatus();
@@ -106,6 +239,24 @@ function GeneratorFormContent({ state }: { state: FormState }) {
                 />
               </label>
             </div>
+            <div className="relative flex items-center">
+              <div className="flex-grow border-t border-muted-foreground"></div>
+              <span className="flex-shrink mx-4 text-muted-foreground text-sm">OR</span>
+              <div className="flex-grow border-t border-muted-foreground"></div>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="youtube-url" className="text-sm font-medium flex items-center gap-2">
+                <Youtube className="text-primary" />
+                YouTube URL
+              </label>
+              <Input
+                id="youtube-url"
+                name="youtubeUrl"
+                type="url"
+                placeholder="https://www.youtube.com/watch?v=..."
+                disabled={pending}
+              />
+            </div>
             <div className="flex justify-center">
               <SubmitButton />
             </div>
@@ -120,62 +271,12 @@ function GeneratorFormContent({ state }: { state: FormState }) {
             AI is working its magic...
           </p>
           <p className="text-sm text-muted-foreground max-w-md">
-            Transcribing audio, summarizing content, and generating your study guide. This might take a few moments.
+            Transcribing, summarizing, and generating your study guide. This might take a few moments.
           </p>
         </div>
       )}
 
-      {showResults && (
-        <div className="space-y-8 animate-in fade-in-0 duration-500">
-          <h2 className="text-3xl font-headline font-bold text-center text-primary">Your Study Guide is Ready!</h2>
-          
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl font-headline flex items-center gap-2">
-                <BookOpen className="text-primary" />
-                Summary
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-foreground/90 leading-relaxed">{state.data.summary}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl font-headline flex items-center gap-2">
-                <List className="text-primary" />
-                Key Terms
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {state.data.keyTerms.map((term, index) => (
-                  <Badge key={index} variant="secondary" className="text-sm py-1 px-3 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
-                    {term}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl font-headline flex items-center gap-2">
-                <HelpCircle className="text-primary" />
-                Quiz Questions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-4 list-decimal list-inside text-foreground/90">
-                {state.data.quizQuestions.map((question, index) => (
-                  <li key={index} className="pl-2">{question}</li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {showResults && <StudyGuideDisplay state={state} />}
     </>
   );
 }
@@ -184,7 +285,6 @@ function GeneratorFormContent({ state }: { state: FormState }) {
 export default function StudyGuideGenerator() {
     const [state, formAction] = useFormState(generateStudyGuide, initialState);
     
-    // Using a key on the form to reset it after a successful submission
     const [formKey, setFormKey] = useState(Date.now());
     const lastSuccessTimestamp = useRef(0);
 

@@ -12,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateQuizQuestionsInputSchema = z.object({
-  lectureContent: z
+  transcript: z
     .string()
     .describe('The transcribed content of the lecture.'),
 });
@@ -43,7 +43,7 @@ const prompt = ai.definePrompt({
   Your task is to create relevant and challenging quiz questions that test the student's understanding of the material.
   The quiz questions should be in an array format.
 
-  Lecture Content: {{{lectureContent}}}
+  Lecture Content: {{{transcript}}}
 
   Output the quiz questions as a JSON array of strings.`,
 });
