@@ -1,8 +1,8 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { generateStudyGuide, FormState } from '@/app/actions';
-import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -283,7 +283,7 @@ function GeneratorFormContent({ state }: { state: FormState }) {
 
 
 export default function StudyGuideGenerator() {
-    const [state, formAction] = useFormState(generateStudyGuide, initialState);
+    const [state, formAction] = useActionState(generateStudyGuide, initialState);
     
     const [formKey, setFormKey] = useState(Date.now());
     const lastSuccessTimestamp = useRef(0);
